@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Space: AI-Powered Interior Designer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+    /* ── Room selector cards ─────────────────────────────── */
+    .room-selector-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .room-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 12px 6px 10px;
+        border: 2px solid #e8e5f5;
+        border-radius: 12px;
+        background: #fafafe;
+        cursor: pointer;
+        transition: all .2s;
+        user-select: none;
+    }
+    .room-card:hover {
+        border-color: #a89ef0;
+        background: #f0eeff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102,126,234,.15);
+    }
+    .room-card.active {
+        border-color: #667eea;
+        background: linear-gradient(135deg,#f0eeff,#ede8ff);
+        box-shadow: 0 4px 16px rgba(102,126,234,.25);
+    }
+    .room-card-icon { font-size: 1.6rem; line-height: 1; }
+    .room-card-label {
+        font-size: .72rem;
+        font-weight: 600;
+        color: #555;
+        text-align: center;
+        line-height: 1.2;
+    }
+    .room-card.active .room-card-label { color: #4a3ab5; }
+
+    /* ── Template box header ─────────────────────────────── */
+    .template-box-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* ── Unified button system ────────────────────────────
+       All action buttons share the same height (44px) and
+       padding so they look consistent throughout the UI.   */
+    .btn-unified {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 44px;
+        padding: 0 22px;
+        border-radius: 10px;
+        border: none;
+        font-size: .92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s, opacity .2s;
+        white-space: nowrap;
+    }
+    .btn-unified:hover:not(:disabled) {
+        transform: translateY(-2px);
+    }
+    .btn-unified:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    /* Colour variants */
+    .btn-purple {
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(102,126,234,.25);
+    }
+    .btn-purple:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(102,126,234,.45); }
+
+    .btn-green {
+        background: linear-gradient(135deg,#11998e,#38ef7d);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(17,153,142,.2);
+    }
+    .btn-green:hover:not(:disabled)  { box-shadow: 0 6px 20px rgba(17,153,142,.4); }
+
+    .btn-ghost {
+        background: #f5f7fa;
+        color: #555;
+        border: 2px solid #ddd;
+        box-shadow: none;
+    }
+    .btn-ghost:hover:not(:disabled)  { background: #ff6b6b; color: #fff; border-color: #ff6b6b; box-shadow: 0 4px 14px rgba(255,107,107,.35); }
+
+    .btn-pink {
+        background: linear-gradient(135deg,#f093fb,#f5576c);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(240,147,251,.25);
+    }
+    .btn-pink:hover:not(:disabled)   { box-shadow: 0 6px 20px rgba(240,147,251,.45); }
+
+    /* Full-width variant (inside action-buttons row) */
+    .btn-unified.full { width: 100%; max-width: 500px; }
+
+    /* Template-box copy + use buttons — small variants */
+    .btn-sm {
+        height: 36px;
+        padding: 0 14px;
+        font-size: .8rem;
+        border-radius: 8px;
+    }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <header class="header">
+        <h1>🏠 Dream Space</h1>
+        <p class="subtitle">AI-Powered Interior Designer · Cost Estimation</p>
+    </header>
+
+    <!-- Instructions -->
+    <div class="instructions-panel">
+        <h3>📝 How to Create Your Perfect Design</h3>
+        <div class="instruction-grid">
+            <div class="instruction-item">
+                <span class="step-number">1</span>
+                <div>
+                    <strong>Upload or Skip</strong>
+                    <p>Upload an existing room photo to redesign, or skip to generate from scratch.</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <span class="step-number">2</span>
+                <div>
+                    <strong>Describe Your Vision</strong>
+                    <p>Use the prompt template — include room type, colours, furniture &amp; style.</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <span class="step-number">3</span>
+                <div>
+                    <strong>Generate &amp; Explore</strong>
+                    <p>Generate the design and get a detailed cost breakdown.</p>
+                </div>
+            </div>
+            <div class="instruction-item">
+                <span class="step-number">4</span>
+                <div>
+                    <strong>Export &amp; Download</strong>
+                    <p>Download the design image or the full cost report.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Prompt template ── -->
+    <div class="prompt-template">
+        <h3>💡 Prompt Template — Pick a Room to Get Started</h3>
+
+        <!-- Room selector cards (built by JS) -->
+        <div class="room-selector-grid" id="roomSelectorGrid"></div>
+
+        <!-- Example prompt box (updates when a card is clicked) -->
+        <div class="template-box">
+            <div class="template-box-header">
+                <span id="templateRoomLabel" style="font-weight:700;color:#444;font-size:.9rem;">
+                    🛏️ Bedroom — Example Prompt
+                </span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn-unified btn-purple btn-sm" id="usePromptBtn" onclick="useSelectedPrompt()">
+                        ✏️ Use This Prompt
+                    </button>
+                    <button class="btn-unified btn-ghost btn-sm" onclick="copyTemplate()">📋 Copy</button>
+                </div>
+            </div>
+            <p class="template-text" id="templateText">
+                "Design a modern <span class="highlight">bedroom</span> with dimensions
+                <span class="highlight">12 ft × 10 ft</span>.
+                The <span class="highlight">north wall should be light blue</span>,
+                <span class="highlight">south wall white</span>,
+                <span class="highlight">east wall grey</span>, and
+                <span class="highlight">west wall cream</span>.
+                Include a <span class="highlight">queen-size bed, two nightstands, a wardrobe,
+                study table with chair, and floor-length curtains</span>.
+                Style should be <span class="highlight">minimalist and contemporary</span>
+                with <span class="highlight">natural lighting</span>."
+            </p>
+        </div>
+        <!-- Quick Tips section removed -->
+    </div>
+
+    <!-- Main content -->
+    <div class="content-grid">
+
+        <!-- ── INPUT PANEL ─────────────────────────────────── -->
+        <div class="panel input-panel">
+            <h2>🎨 Design Input</h2>
+
+            <div class="form-section">
+                <h3>Step 1: Upload Room Image (Optional)</h3>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <div class="upload-placeholder">
+                        <span class="upload-icon">📸</span>
+                        <p>Click or drag image here</p>
+                        <small>PNG, JPG, JPEG — max 16 MB</small>
+                    </div>
+                    <img id="previewImage" style="display:none;max-width:100%;max-height:300px;border-radius:12px;">
+                    <button id="removeImage" style="display:none;margin-top:10px;background:#ff6b6b;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">✕ Remove</button>
+                </div>
+                <!-- Segment button — green, full width -->
+                <button class="btn-unified btn-green full" id="segmentBtn" disabled style="margin-top:15px;">
+                    🔍 Segment Image
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3>Step 2: Select Room Type</h3>
+                <select id="roomType" class="input-field">
+                    <option value="">-- Select Room Type --</option>
+                    <option value="bedroom">Bedroom</option>
+                    <option value="kitchen">Kitchen</option>
+                    <option value="bathroom">Bathroom</option>
+                    <option value="living room">Living Room</option>
+                    <option value="office">Office</option>
+                    <option value="lab">Laboratory</option>
+                    <option value="classroom">Classroom</option>
+                    <option value="auditorium">Auditorium</option>
+                    <option value="hall">Hall</option>
+                </select>
+            </div>
+
+            <div class="form-section">
+                <h3>Step 2.5: Generation Mode</h3>
+                <div class="mode-selector">
+                    <label class="mode-option">
+                        <input type="radio" name="mode" value="fast" checked>
+                        <div class="mode-card">
+                            <span class="mode-icon">⚡</span>
+                            <strong>Fast Mode (Recommended)</strong>
+                            <small>30–90 seconds · Good quality · CPU-friendly</small>
+                        </div>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="mode" value="quality">
+                        <div class="mode-card">
+                            <span class="mode-icon">🎨</span>
+                            <strong>Quality Mode</strong>
+                            <small>10–20 minutes · Best quality · Slower</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Step 3: Describe Your Design</h3>
+                <textarea id="designPrompt" class="textarea-field" rows="8"
+                    placeholder="Describe your ideal room design here…
+
+Example: Design a modern bedroom with 12 ft × 10 ft dimensions. North wall light blue, south wall white. Include a queen bed, two nightstands, wardrobe, and study table. Minimalist style with natural lighting."></textarea>
+                <div class="char-count"><span id="charCount">0</span> / 1000 characters</div>
+            </div>
+
+            <!-- Action buttons — all same height (44px) -->
+            <div class="action-buttons">
+                <button class="btn-unified btn-purple" id="generateBtn" style="flex:1;min-width:140px;">
+                    ✨ Generate Design
+                </button>
+                <button class="btn-unified btn-green"  id="analyzeBtn"  style="flex:1;min-width:140px;">
+                    🔍 Analyse Prompt
+                </button>
+                <button class="btn-unified btn-ghost"  id="clearBtn"    style="flex:1;min-width:120px;">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- ── OUTPUT PANEL ────────────────────────────────── -->
+        <div class="panel output-panel">
+            <h2>🖼️ Generated Design</h2>
+
+            <div class="loading-spinner" id="loadingSpinner" style="display:none">
+                <div class="spinner"></div>
+                <p id="loadingText">Generating your dream space…</p>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="generated">Generated Design</button>
+                <button class="tab-btn"        data-tab="cost">Cost Estimate</button>
+                <button class="tab-btn"        data-tab="segmented">Segmented Image</button>
+                <button class="tab-btn"        data-tab="analysis">Prompt Analysis</button>
+            </div>
+
+            <div class="tab-content">
+
+                <!-- ① Generated Design -->
+                <div class="tab-panel active" id="generated">
+                    <div class="output-placeholder" id="outputPlaceholder">
+                        <span class="placeholder-icon">🎨</span>
+                        <p>Your design will appear here</p>
+                    </div>
+                    <div id="outputImageContainer" style="display:none;text-align:center">
+                        <img id="outputImage" class="output-image" alt="Generated Design">
+                        <!-- Image action buttons — all same size -->
+                        <div class="image-actions" style="margin-top:16px;">
+                            <button class="btn-unified btn-purple" id="downloadBtn">💾 Download</button>
+                            <button class="btn-unified btn-green"  id="enhanceBtn">✏️ Edit Room</button>
+                            <button class="btn-unified btn-pink"   id="estimateCostBtn">💰 Estimate Cost</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ② Cost Estimate -->
+                <div class="tab-panel" id="cost">
+                    <div class="output-placeholder" id="costPlaceholder">
+                        <span class="placeholder-icon">💰</span>
+                        <p>Generate a design first, then click "Estimate Cost"</p>
+                    </div>
+                    <div id="costContainer" style="display:none">
+                        <div class="cost-summary-card">
+                            <h3>💰 Total Estimated Cost</h3>
+                            <div class="cost-total" id="costTotal">₹0</div>
+                            <div class="cost-range" id="costRange">Range: ₹0 – ₹0</div>
+                            <div class="cost-tier"  id="costTier">Quality: STANDARD</div>
+                        </div>
+                        <div class="cost-section">
+                            <h4>📐 Room Details</h4>
+                            <div id="roomDetails" class="cost-details"></div>
+                        </div>
+                        <div class="cost-section">
+                            <h4>💵 Full Cost Breakdown</h4>
+                            <div id="costBreakdown"></div>
+                        </div>
+                        <div class="cost-section">
+                            <h4>📊 Quality Tier Comparison</h4>
+                            <div id="tierComparison">
+                                <button class="btn-unified btn-green" id="compareTiersBtn">
+                                    Compare All Tiers
+                                </button>
+                            </div>
+                        </div>
+                        <div class="cost-section">
+                            <h4>📋 Important Notes</h4>
+                            <div class="cost-notes" id="costNotes"></div>
+                        </div>
+                        <p id="costTimestamp" style="color:#aaa;font-size:.8rem;text-align:right;margin-top:8px"></p>
+                        <div class="image-actions" style="margin-top:20px;">
+                            <button class="btn-unified btn-purple" id="downloadCostBtn">💾 Download Report</button>
+                            <button class="btn-unified btn-green"  id="printCostBtn">🖨️ Print Report</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ③ Segmented Image -->
+                <div class="tab-panel" id="segmented">
+                    <div class="output-placeholder">
+                        <span class="placeholder-icon">🔍</span>
+                        <p>Upload and segment an image to see results</p>
+                    </div>
+                    <div id="segmentedContainer" style="display:none;text-align:center">
+                        <img id="segmentedImage" class="output-image" alt="Segmented">
+                        <div class="segmentation-info" id="segmentationInfo"></div>
+                    </div>
+                </div>
+
+                <!-- ④ Prompt Analysis -->
+                <div class="tab-panel" id="analysis">
+                    <div class="output-placeholder">
+                        <span class="placeholder-icon">📊</span>
+                        <p>Click "Analyse Prompt" to see parsed requirements</p>
+                    </div>
+                    <div id="analysisContainer" style="display:none">
+                        <div class="analysis-section"><h4>Room Information</h4><div id="roomInfo"></div></div>
+                        <div class="analysis-section"><h4>Colour Scheme</h4>   <div id="colorInfo"></div></div>
+                        <div class="analysis-section"><h4>Furniture List</h4>  <div id="furnitureInfo"></div></div>
+                        <div class="analysis-section"><h4>Design Style</h4>   <div id="styleInfo"></div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+</div>
+<script src="/static/js/main.js"></script>
+</body>
+</html>
